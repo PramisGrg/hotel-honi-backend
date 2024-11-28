@@ -1,0 +1,507 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id                    String             @id @default(uuid())
+  name                  String
+  dialCode              String
+  phoneNumber           String
+  username              String?
+  avatar                String?
+  passwordHash          String
+  activeHotelId         String?
+  isVerified            Boolean            @default(false)
+  isPhoneChangeVerified Boolean            @default(true)
+  otpHash               String?
+  HotelUserRel          HotelUserRel[]
+  FoodMenu              FoodMenuItem[]
+  FoodMenuCategory      FoodMenuCategory[]
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  Kot              Kot[]
+  CashFlow         CashFlow[]
+  Inventory        Inventory[]
+  RecentLogins     RecentLogins[]
+  StaffInvitations StaffInvitations[]
+  PurchaseOrder    PurchaseOrder[]
+  Transactions     Transactions[]
+}
+
+model RecentLogins {
+  id            String  @id @default(uuid())
+  user          user    @relation(fields: [userId], references: [id])
+  userId        String
+  loginToken    String
+  oneSignalId   String
+  deviceName    String
+  isBlacklisted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model hotel {
+  id               String             @id @default(uuid())
+  name             String
+  primaryContact   String?
+  address          String
+  HotelUserRel     HotelUserRel[]
+  websiteMetadata  websiteMetadata[]
+  HotelCustomer    HotelCustomer[]
+  HotelSuppliers   HotelSuppliers[]
+  FoodMenu         FoodMenuItem[]
+  FoodMenuCategory FoodMenuCategory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Table              Table[]
+  Space              Space[]
+  Room               Room[]
+  Printer            Printer[]
+  Kot                Kot[]
+  CashFlow           CashFlow[]
+  Inventory          Inventory[]
+  Orders             Orders[]
+  StaffInvitations   StaffInvitations[]
+  PurchaseOrder      PurchaseOrder[]
+  Role               Role[]
+  BillingInformation BillingInformation[]
+  paymentMethods     paymentMethods[]
+  Transactions       Transactions[]
+}
+
+model HotelUserRel {
+  id      String @id @default(uuid())
+  user    user   @relation(fields: [userId], references: [id])
+  userId  String
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+  role    Role   @relation(fields: [roleId], references: [id])
+  roleId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum serviceChargeType {
+  PERCENTAGE
+  NUMBER
+}
+
+model BillingInformation {
+  id            String @id @default(uuid())
+  taxRate       Float  @default(13.00)
+  serviceCharge Float  @default(0)
+
+  serviceChargeType serviceChargeType
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+}
+
+enum roleName {
+  SUPERADMIN
+  ADMIN
+  MANAGER
+  ACCOUNTANT
+  BILLING
+  RECEPTION
+  HOUSEKEEPING
+  KITCHEN
+  CUSTOM
+}
+
+model Role {
+  id               String             @id @default(uuid())
+  name             roleName           @default(SUPERADMIN)
+  customName       String?
+  HotelUserRel     HotelUserRel[]
+  permissions      String[]
+  hotel            hotel?             @relation(fields: [hotelId], references: [id])
+  hotelId          String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  StaffInvitations StaffInvitations[]
+}
+
+model websiteMetadata {
+  id              String         @id @default(uuid())
+  hotel           hotel          @relation(fields: [hotelId], references: [id])
+  hotelId         String
+  url             String
+  customDomain    Boolean        @default(false)
+  title           String
+  description     String?
+  theme           websiteThemes? @relation(fields: [websiteThemesId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  websiteThemesId String?
+}
+
+model Space {
+  id    String  @id @default(uuid())
+  name  String
+  Room  Room[]
+  Table Table[]
+
+  hotel     hotel    @relation(fields: [hotelId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  hotelId   String
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+}
+
+model Room {
+  id          String     @id @default(uuid())
+  name        String
+  description String
+  status      RoomStatus @default(AVAILABLE)
+  price       String
+  capacity    Int
+  images      String[]
+  space       Space?     @relation(fields: [spaceId], references: [id])
+  spaceId     String?
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Orders    Orders[]
+}
+
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+}
+
+model Table {
+  id       String      @id @default(uuid())
+  name     String
+  capacity Int
+  status   TableStatus
+
+  space   Space?  @relation(fields: [spaceId], references: [id])
+  spaceId String?
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Orders    Orders[]
+}
+
+model HotelCustomer {
+  id            String  @id @default(uuid())
+  name          String
+  contactNumber String?
+  address       String?
+  email         String?
+  balance       Float   @default(0)
+  hotel         hotel   @relation(fields: [hotelId], references: [id])
+  hotelId       String
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Transactions Transactions[]
+}
+
+model HotelSuppliers {
+  id            String  @id @default(uuid())
+  name          String
+  contactNumber String?
+  address       String?
+  email         String?
+  balance       Float   @default(0)
+  hotel         hotel   @relation(fields: [hotelId], references: [id])
+  hotelId       String
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  PurchaseOrder PurchaseOrder[]
+  Transactions  Transactions[]
+}
+
+model FoodMenuItem {
+  id          String  @id @default(uuid())
+  name        String
+  price       Float
+  image       String?
+  description String  @default("")
+
+  category           FoodMenuCategory? @relation(fields: [foodMenuCategoryId], references: [id])
+  foodMenuCategoryId String?
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdBy user   @relation(fields: [userId], references: [id])
+  userId    String
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Kot       Kot?       @relation(fields: [kotId], references: [id])
+  kotId     String?
+  KotItems  KotItems[]
+}
+
+model FoodMenuCategory {
+  id    String  @id @default(uuid())
+  name  String
+  image String?
+
+  FoodMenu  FoodMenuItem[]
+  isDefault Boolean        @default(false)
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdBy user   @relation(fields: [userId], references: [id])
+  userId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum PrinterType {
+  BLUETOOTH
+  NETWORK
+}
+
+model Printer {
+  id        String      @id @default(uuid())
+  name      String      @default("")
+  ipAddress String      @default("")
+  type      PrinterType
+  nickName  String      @default("")
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrderType {
+  ROOM
+  TABLE
+}
+
+model Orders {
+  id          String    @id @default(uuid())
+  orderNumber String    @default("1")
+  table       Table?    @relation(fields: [tableId], references: [id])
+  tableId     String?
+  type        OrderType
+
+  room   Room?   @relation(fields: [roomId], references: [id])
+  roomId String?
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  status KotStatus @default(PENDING)
+
+  isDeleted Boolean  @default(false)
+  kots      Kot[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum KotStatus {
+  PENDING
+  PREPARING
+  SERVED
+  CANCELLED
+}
+
+model Kot {
+  id        String     @id @default(uuid())
+  kotNumber String
+  KotItems  KotItems[]
+
+  status KotStatus @default(PENDING)
+
+  type OrderType
+
+  orderForId String
+
+  placedBy user   @relation(fields: [userId], references: [id])
+  userId   String
+
+  hotel        hotel          @relation(fields: [hotelId], references: [id])
+  hotelId      String
+  FoodMenuItem FoodMenuItem[]
+  Orders       Orders?        @relation(fields: [ordersId], references: [id])
+  ordersId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model KotItems {
+  id             String       @id @default(uuid())
+  item           FoodMenuItem @relation(fields: [foodMenuItemId], references: [id])
+  foodMenuItemId String
+  quantity       Int          @default(1)
+  kot            Kot          @relation(fields: [kotId], references: [id])
+  kotId          String
+  status         KotStatus    @default(PENDING)
+}
+
+enum CashFlowCategory {
+  SALES
+  CREDIT
+  DEBIT
+  TAX
+}
+
+enum CashFlowStatus {
+  NORMAL
+  ABORTED
+  VOID
+}
+
+model CashFlow {
+  id              String           @id @default(uuid())
+  amount          Float
+  category        CashFlowCategory
+  remarks         String
+  status          CashFlowStatus
+  paymentMethod   paymentMethods   @relation(fields: [paymentMethodId], references: [id])
+  paymentMethodId String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  performedBy user   @relation(fields: [userId], references: [id])
+  userId      String
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+}
+
+model Inventory {
+  id          String  @id @default(uuid())
+  name        String
+  quantity    Int
+  price       Float   @default(0)
+  unit        String
+  image       String?
+  description String?
+
+  hotel   hotel  @relation(fields: [hotelId], references: [id])
+  hotelId String
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  user          user?           @relation(fields: [userId], references: [id])
+  userId        String?
+  PurchaseOrder PurchaseOrder[]
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model StaffInvitations {
+  id      String           @id @default(uuid())
+  role    roleName?
+  user    user             @relation(fields: [userId], references: [id])
+  userId  String
+  hotel   hotel            @relation(fields: [hotelId], references: [id])
+  hotelId String
+  status  InvitationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Role      Role?    @relation(fields: [roleId], references: [id])
+  roleId    String?
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  ISAPROOVED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id           String              @id @default(uuid())
+  name         String
+  isCustomItem Boolean             @default(false)
+  quantity     Int
+  price        Float
+  status       PurchaseOrderStatus @default(PENDING)
+  inventory    Inventory?          @relation(fields: [inventoryId], references: [id])
+  inventoryId  String?
+  staff        user?               @relation(fields: [staffId], references: [id])
+  staffId      String?
+  supplier     HotelSuppliers?     @relation(fields: [supplierId], references: [id])
+  supplierId   String?
+  remarks      String?
+  isDeleted    Boolean             @default(false)
+  hotel        hotel               @relation(fields: [hotelId], references: [id])
+  hotelId      String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model paymentMethods {
+  id        String     @id @default(uuid())
+  name      String
+  remarks   String     @default("")
+  hotel     hotel      @relation(fields: [hotelId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  hotelId   String
+  CashFlow  CashFlow[]
+}
+
+model websiteThemes {
+  id              String @id @default(uuid())
+  name            String
+  vercelProjectId String
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  websiteMetadata websiteMetadata[]
+}
+
+enum transactionOf {
+  CUSTOMER
+  SUPPLIER
+  STAFF
+}
+
+model Transactions {
+  id            String          @id @default(uuid())
+  customer      HotelCustomer?  @relation(fields: [customerId], references: [id])
+  customerId    String?
+  supplier      HotelSuppliers? @relation(fields: [supplierId], references: [id])
+  supplierId    String?
+  staff         user?           @relation(fields: [staffId], references: [id])
+  staffId       String?
+  transactionOf transactionOf
+  isCredit      Boolean         @default(false)
+  amount        Float           @default(0)
+  remarks       String?         @default("")
+  hotel         hotel           @relation(fields: [hotelId], references: [id])
+  hotelId       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -1,0 +1,1 @@
+export const defaultPaymentMethod = ["Cash", "Card", "Bank Transfer"]
