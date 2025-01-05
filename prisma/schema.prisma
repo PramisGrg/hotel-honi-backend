@@ -326,6 +326,7 @@ enum KotStatus {
   PREPARING
   SERVED
   CANCELLED
+  COMPLETED
 }
 
 model Kot {

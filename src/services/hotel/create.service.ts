@@ -59,7 +59,6 @@ export async function createHotelService(data: TCreateHotel, userId: string) {
     })
   }
 
-
   for (let i = 0; i < defaultFoodCategory.length; i++) {
     await Database.client.foodMenuCategory.create({
       data: {
@@ -68,27 +67,27 @@ export async function createHotelService(data: TCreateHotel, userId: string) {
         userId: userId,
         isDefault: true
       }
-    });
+    })
   }
 
-  for (let i = 0; i < defaultPaymentMethod.length; i++) {
-    await Database.client.paymentMethods.create({
-      data: {
-        name: defaultPaymentMethod[i],
-        hotelId: hotel.id,
-        remarks: "Default Payment Method",
-      }
-    });
-  }
+  // for (let i = 0; i < defaultPaymentMethod.length; i++) {
+  //   await Database.client.paymentMethods.create({
+  //     data: {
+  //       name: defaultPaymentMethod[i],
+  //       hotelId: hotel.id,
+  //       remarks: "Default Payment Method",
+  //     }
+  //   });
+  // }
 
-  await Database.client.billingInformation.create({
-    data: {
-      serviceCharge: 0,
-      serviceChargeType: "PERCENTAGE",
-      taxRate: 13,
-      hotelId: hotel.id
-    }
-  });
+  // await Database.client.billingInformation.create({
+  //   data: {
+  //     serviceCharge: 0,
+  //     serviceChargeType: "PERCENTAGE",
+  //     taxRate: 13,
+  //     hotelId: hotel.id
+  //   }
+  // });
 
   await Database.client.user.update({ where: { id: userId }, data: { activeHotelId: hotel.id } })
 
